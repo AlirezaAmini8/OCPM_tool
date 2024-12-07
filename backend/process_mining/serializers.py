@@ -1,7 +1,16 @@
 from rest_framework import serializers
-from .models import OCELFile
+from .models import FileMetadata, Process
 
-class OCELFileSerializer(serializers.ModelSerializer):
+
+class ProcessSerializer(serializers.ModelSerializer):
     class Meta:
-        model = OCELFile
-        fields = ['file']
+        model = Process
+        fields = ['process_id', 'activities', 'objects_involved']
+
+
+class FileMetadataSerializer(serializers.ModelSerializer):
+    processes = ProcessSerializer(many=True)
+
+    class Meta:
+        model = FileMetadata
+        fields = ['file_name', 'filters', 'processes']
