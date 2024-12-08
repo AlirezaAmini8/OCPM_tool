@@ -1,3 +1,4 @@
+import networkx as nx
 import pm4py
 import os
 
@@ -6,10 +7,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from tempfile import NamedTemporaryFile
 from .models import FileMetadata, Process
-from .serializers import FileMetadataSerializer
 
 
 class UploadOCELFileView(APIView):
+
     def post(self, request):
         if 'file' not in request.FILES:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
@@ -59,8 +60,21 @@ class UploadOCELFileView(APIView):
 
                 os.remove(tmp_path)
 
-                serializer = FileMetadataSerializer(file_metadata)
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                G = nx.DiGraph()
+                for process_id, process_data in processes_dict.items():
+                    for activity in process_data['activities']:
+                        for obj in process_data['objects']:
+                            G.add_edge(activity, obj, process=process_id)
+
+                graph_data = {
+                    "nodes": [{"id": node} for node in G.nodes],
+                    "edges": [{"source": u, "target": v, "process": G[u][v].get('process')} for u, v in G.edges]
+                }
+
+                return Response({
+                    'file_name': file.name,
+                    'graph': graph_data
+                }, status=status.HTTP_200_OK)
 
             except Exception as e:
                 if os.path.exists(tmp_path):
@@ -70,3 +84,4 @@ class UploadOCELFileView(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

@@ -1,0 +1,4 @@
+Django~=4.2.7
+networkx~=3.4.2
+pm4py~=2.7.12.3
+djangorestframework~=3.14.0

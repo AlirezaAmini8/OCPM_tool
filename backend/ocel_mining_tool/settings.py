@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-u(-!9o+n1hh099))+vtwj6b0*m6&m!6!ov(*q44v&w*spmxj2=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -51,11 +51,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
-
-# CORS Configuration
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React development server
 ]
 
 ROOT_URLCONF = 'ocel_mining_tool.urls'

@@ -1,0 +1,22 @@
+{
+  "Header": {
+    "title": "Welcome to Object-Centric Process Mining",
+    "paragraph": "This platform is designed to help you visualize and analyze object-centric processes to understand how objects and activities interact in your workflow.",
+    "buttons": [
+      {
+        "label": "Login",
+        "action": "/login",
+        "color": "#0000FF"
+      },
+      {
+        "label": "Sign Up",
+        "action": "/signup",
+        "color": "#0000FF"
+      },
+      {
+        "label": "Upload OCEL File",
+        "color": "#FF0000"
+      }
+    ]
+  }
+}

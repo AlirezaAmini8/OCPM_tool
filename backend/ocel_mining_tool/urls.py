@@ -20,6 +20,6 @@ from process_mining.views import UploadOCELFileView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('upload/', UploadOCELFileView.as_view(), name='file-upload'),
+    path('upload/', UploadOCELFileView.as_view(), name='upload-ocel-file'),
 ]
 
