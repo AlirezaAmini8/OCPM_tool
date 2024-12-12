@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'process_mining',
+    'celery',
     'rest_framework',
     'corsheaders',
 ]
@@ -54,6 +55,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'ocel_mining_tool.urls'
+
+AUTH_USER_MODEL = 'users.User'
 
 TEMPLATES = [
     {

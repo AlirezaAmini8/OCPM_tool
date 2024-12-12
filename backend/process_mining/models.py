@@ -1,19 +1,13 @@
 from django.db import models
 
+from users.models import User
+
 
 class FileMetadata(models.Model):
+    file_path = models.CharField(max_length=255)
     file_name = models.CharField(max_length=255)
-    filters = models.JSONField()
-    processes = models.ManyToManyField('Process', related_name='file_metadata')
+    username = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.file_name
-
-
-class Process(models.Model):
-    process_id = models.CharField(max_length=255)
-    activities = models.JSONField()
-    objects_involved = models.JSONField()
-
-    def __str__(self):
-        return self.process_id
