@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +27,11 @@ SECRET_KEY = 'django-insecure-u(-!9o+n1hh099))+vtwj6b0*m6&m!6!ov(*q44v&w*spmxj2=
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000"
+]
 
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Application definition
 
@@ -38,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'process_mining',
+    'users',
     'celery',
     'rest_framework',
     'corsheaders',
@@ -86,17 +92,17 @@ DATABASES = {
         'NAME': 'ocel_db',
         'USER': 'postgres',
         'PASSWORD': 'password',
-        'HOST': 'postgres',
+        'HOST': 'localhost',
         'PORT': '5432',
     }
 }
 
 # Minio configuration
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-AWS_ACCESS_KEY_ID = 'root'
-AWS_SECRET_ACCESS_KEY = 'password'
+AWS_ACCESS_KEY_ID = '2PEdE6aujNVMAfjNpJGH'
+AWS_SECRET_ACCESS_KEY = 'J6ZlSceN8kDm2yDjZvG7EUwIPEZ5MLsMTs55sAFL'
 AWS_STORAGE_BUCKET_NAME = 'ocel'
-AWS_S3_ENDPOINT_URL = 'http://minio:9000'
+AWS_S3_ENDPOINT_URL = 'http://localhost:9000'
 
 
 # Password validation

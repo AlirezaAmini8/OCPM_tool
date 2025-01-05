@@ -1,12 +1,18 @@
-version: '3.8'
-
 services:
+#  web:
+#    build: .
+#    ports:
+#      - "8000:8000"
+#    depends_on:
+#      - postgres
+#      - minio
+
   postgres:
     image: postgres
     container_name: postgres-container
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: ocel_db
     ports:
       - "5432:5432"
@@ -19,12 +25,24 @@ services:
     environment:
       MINIO_ROOT_USER: root
       MINIO_ROOT_PASSWORD: password
+      MINIO_ACCESS_KEY: 2PEdE6aujNVMAfjNpJGH
+      MINIO_SECRET_KEY: J6ZlSceN8kDm2yDjZvG7EUwIPEZ5MLsMTs55sAFL
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
+
+#  frontend:
+#    build:
+#      context: ../frontend
+#      dockerfile: Dockerfile
+#    container_name: frontend-container
+#    ports:
+#      - "3000:3000"
+#    depends_on:
+#      - web
 
 volumes:
   postgres_data:
