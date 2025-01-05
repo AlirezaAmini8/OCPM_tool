@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 const UploadModal = ({ open, setOpen }) => {
     const [file, setFile] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [processes, setProcesses] = useState(null);
     const [showSpinner, setShowSpinner] = useState(false);
     const navigate = useNavigate();
 
@@ -28,17 +27,15 @@ const UploadModal = ({ open, setOpen }) => {
         formData.append('file', file);
 
         axios
-            .post('http://localhost:8000/api/upload/', formData, {
+            .post('http://localhost:8000/upload/', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             })
             .then((response) => {
-                setProcesses(response.data);
                 setShowSpinner(false);
                 setLoading(false);
-
-                navigate('/visualization', { state: { processes: response.data } });
+                navigate('/visualization', { state: { graph: response.data.graph } });
             })
             .catch((error) => {
                 console.error('Error uploading file:', error);

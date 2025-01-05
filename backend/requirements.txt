@@ -1,6 +1,6 @@
 Django~=4.2.7
-networkx~=3.4.2
-pm4py~=2.7.12.3
+pm4py~=2.7.12.4
 djangorestframework~=3.14.0
 boto3~=1.35.71
 celery~=5.4.0
+django-cors-headers~=4.3.1
