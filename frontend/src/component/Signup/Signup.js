@@ -5,68 +5,76 @@ import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
-import { useContext, useEffect, useState } from 'react';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authContext } from "../../App";
 import axios from 'axios';
+import ParticlesBg from 'particles-bg';
 
 export default function Signup() {
     const [showPassword, setShowPassword] = useState(false);
-    const { setAuth } = useContext(authContext);
-    const navigate = useNavigate();
     const [signupError, setSignupError] = useState(null);
+    const [signupSuccess, setSignupSuccess] = useState(false);
+    const navigate = useNavigate();
 
-    const nav = () => {
-        navigate('/dashboard');
+    const handleBackClick = () => {
+        navigate('/');
     };
-
-    useEffect(() => {
-        const token = sessionStorage.getItem('token');
-        if (token) {
-            nav();
-        }
-    }, []);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        if (!data.get('password') || !data.get('username')) {
-            setSignupError('Some fields are empty!');
-            return;
-        }
 
         try {
-            const payload = JSON.stringify({
-                password: data.get('password'),
+            const payload = {
                 username: data.get('username'),
-            });
-            const customConfig = {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                password: data.get('password'),
             };
-            const response = await axios.post('http://localhost:8000/signup/', payload, customConfig);
-            if (response.status === 201) {
-                sessionStorage.setItem('token', response.data.token);
-                setAuth(true);
-                nav();
-            } else {
-                setSignupError('Username or password is incorrect!');
-            }
+            await axios.post('http://localhost:8000/signup/', payload);
+            setSignupSuccess(true);
+            setSignupError(null);
         } catch (error) {
-            setSignupError('Username or password is incorrect!');
+            if (error.response && error.response.data) {
+                setSignupError(error.response.data.message);
+            } else {
+                setSignupError('An unexpected error occurred. Please try again.');
+            }
         }
     };
 
     return (
         <Container component="main" maxWidth="xs">
             <CssBaseline />
-            <Box sx={{ marginTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Typography component="h1" variant="h5">
+            <ParticlesBg type="circle" bg={true} />
+            <Box sx={{
+                marginTop: 8,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 4,
+                borderRadius: 2,
+                boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.5)'
+            }}>
+                <Box sx={{ display: 'flex', alignSelf: 'flex-start', mb: 2 }}>
+                    <IconButton
+                        onClick={handleBackClick}
+                        sx={{
+                            color: 'white',
+                            backgroundColor: 'blue',
+                            '&:hover': {
+                                backgroundColor: 'darkblue',
+                            },
+                        }}
+                    >
+                        <ArrowBackIcon />
+                    </IconButton>
+                </Box>
+                <Typography component="h1" variant="h5" sx={{ color: 'white' }}>
                     Sign Up
                 </Typography>
                 <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
@@ -79,6 +87,12 @@ export default function Signup() {
                         name="username"
                         autoComplete="username"
                         autoFocus
+                        InputLabelProps={{ style: { color: 'white' } }}
+                        sx={{
+                            input: { color: 'white' },
+                            fieldset: { borderColor: 'white' },
+                            '&:hover fieldset': { borderColor: 'gray' },
+                        }}
                     />
                     <TextField
                         margin="normal"
@@ -89,6 +103,12 @@ export default function Signup() {
                         type={showPassword ? 'text' : 'password'}
                         id="password"
                         autoComplete="current-password"
+                        InputLabelProps={{ style: { color: 'white' } }}
+                        sx={{
+                            input: { color: 'white' },
+                            fieldset: { borderColor: 'white' },
+                            '&:hover fieldset': { borderColor: 'gray' },
+                        }}
                         InputProps={{
                             endAdornment: (
                                 <InputAdornment position="end">
@@ -97,7 +117,7 @@ export default function Signup() {
                                         onClick={() => setShowPassword(!showPassword)}
                                         edge="end"
                                     >
-                                        {showPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                                        {showPassword ? <VisibilityIcon sx={{color: 'white'}}/> : <VisibilityOffIcon sx={{color: 'white'}}/>}
                                     </IconButton>
                                 </InputAdornment>
                             ),
@@ -107,13 +127,27 @@ export default function Signup() {
                         type="submit"
                         fullWidth
                         variant="contained"
-                        sx={{ mt: 3, mb: 2, borderRadius: '20px', color: 'white' }}
+                        sx={{
+                            mt: 3,
+                            mb: 2,
+                            borderRadius: '20px',
+                            backgroundColor: 'secondary.main',
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: 'secondary.dark',
+                            },
+                        }}
                     >
                         Sign Up
                     </Button>
                     {signupError && (
                         <Typography variant="body2" color="error" align="center">
                             {signupError}
+                        </Typography>
+                    )}
+                    {signupSuccess && (
+                        <Typography variant="body2" align="center" sx={{ color: '#4caf50' }}>
+                            Signup successful! Please log in to continue.
                         </Typography>
                     )}
                 </Box>
