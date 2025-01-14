@@ -13,13 +13,18 @@ class UserSignupView(APIView):
     def post(self, request):
         serializer = UserSignupSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({
-                'message': 'User created successfully',
-                'token': token.key
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                serializer.save()
+                return Response({
+                    'message': 'User created successfully. Please log in.'
+                }, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({
+                    'message': str(e)
+                }, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+                'message': 'Username already exists.'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserLoginView(APIView):

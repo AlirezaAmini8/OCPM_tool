@@ -27,7 +27,6 @@ def discover_oc_petri_net(file_metadata):
         'bgcolor': 'white',
         'rankdir': 'LR'
     }
-    # pm4py.vis.view_ocpn(ocpn, 'html', 'white', 'LR')
 
     gviz = ocpn_visualizer.apply(ocpn, parameters=params)
     os.remove(download_path)
@@ -47,13 +46,19 @@ def discover_ocdfg(file_metadata):
     ocel_log = pm4py.read_ocel(download_path)
     ocdfg = pm4py.discover_ocdfg(ocel_log)
 
+    object_types = pm4py.ocel_get_object_types(ocel_log)
+    print("Object types: ", object_types)
+
+    object_attr = pm4py.ocel_get_attribute_names(ocel_log)
+    print("Object attrs: ", object_attr)
+
     parameters = {
         classic.Parameters.FORMAT: 'svg',
         classic.Parameters.ANNOTATION: 'frequency',
         classic.Parameters.ACT_METRIC: 'unique_objects',
         classic.Parameters.EDGE_METRIC: 'unique_objects',
-        classic.Parameters.ACT_THRESHOLD: 100,
-        classic.Parameters.EDGE_THRESHOLD: 100,
+        classic.Parameters.ACT_THRESHOLD: 500,
+        classic.Parameters.EDGE_THRESHOLD: 500,
         classic.Parameters.PERFORMANCE_AGGREGATION_MEASURE: 'mean',
         "bgcolor": 'white',
         "rankdir": 'LR'
@@ -70,3 +75,9 @@ def discover_ocdfg(file_metadata):
 
     os.remove(path)
     return content
+
+
+def filterObject(ocel):
+    filtered_ocel = pm4py.filter_ocel_cc_object(ocel, 'order1')
+    pm4py.filtering.filter_ocel_end_events_per_object_type()
+    pm4py.filter_ocel_objects()
