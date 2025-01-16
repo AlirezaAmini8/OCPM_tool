@@ -56,7 +56,7 @@ const UploadModal = ({ open, setOpen }) => {
                         marginTop: '10%',
                         textAlign: 'center',
                         borderRadius: 2,
-                        border: '2px solid orange',
+                        border: '5px solid orange',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
