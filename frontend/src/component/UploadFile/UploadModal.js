@@ -35,7 +35,12 @@ const UploadModal = ({ open, setOpen }) => {
             .then((response) => {
                 setShowSpinner(false);
                 setLoading(false);
-                navigate('/visualization', { state: { graph: response.data.graph } });
+                navigate('/visualization', {
+                    state: {
+                        graph: response.data.graph,
+                        objects: response.data.objects,
+                        file_metadata_id: response.data.file_metadata_id,
+                } });
             })
             .catch((error) => {
                 console.error('Error uploading file:', error);
