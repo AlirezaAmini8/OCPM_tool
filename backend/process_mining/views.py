@@ -96,8 +96,8 @@ class ApplyFiltersView(APIView):
         visualization_type = data.get('visualizationType')
         previous_visualization_type = data.get('previousVisualizationType')
         filters = {
-            "activity_percent": data.get('activityPercent', 10),
-            "path_percent": data.get('pathPercent', 10),
+            "activity_percent": data.get('activityPercent', 90),
+            "path_percent": data.get('pathPercent', 90),
             "selected_objects": data.get('unselectedObjects'),
             "annotation_type": data.get('annotationType', 'unique_objects'),
             "orientation": 'TB' if data.get('orientation') == 'vertical' else 'LR'

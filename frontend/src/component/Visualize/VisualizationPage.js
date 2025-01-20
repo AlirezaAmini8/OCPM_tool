@@ -183,6 +183,8 @@ const VisualizationPage = () => {
                     color: 'white',
                     padding: 2,
                     boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+                    position: 'relative',
+                    zIndex: 1,
                 }}
             >
                 <Container maxWidth="xl">
@@ -425,7 +427,12 @@ const VisualizationPage = () => {
                             zIndex: 9999,
                         }}
                     >
-                        <CircularProgress sx={{ color: 'white' }} />
+                        <Box sx={{ textAlign: 'center' }}>
+                            <CircularProgress sx={{ color: 'white' }} />
+                            <Typography sx={{ color: 'white', marginTop: 2 }}>
+                                Processing your filters...
+                            </Typography>
+                        </Box>
                     </Box>
                 )}
             </Box>

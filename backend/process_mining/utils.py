@@ -13,7 +13,6 @@ from ocel_mining_tool import settings
 def discover(ocel, is_ocdfg):
     if is_ocdfg:
         return pm4py.discover_ocdfg(ocel)
-
     else:
         return pm4py.discover_oc_petri_net(ocel, "imd")
 
@@ -54,8 +53,8 @@ def readFromS3(file_name, file_path):
 def filter_ocel(ocel, filters=None):
     if filters is None:
         filters = {
-            "activity_percent": 10,
-            "path_percent": 10,
+            "activity_percent": 90,
+            "path_percent": 90,
             "selected_objects": None,
             "annotation_type": "unique_objects",
             "orientation": "LR"
@@ -71,10 +70,11 @@ def filter_ocel(ocel, filters=None):
         activity_threshold = filters.get("activity_percent", 10)
         path_threshold = filters.get("path_percent", 10)
 
-        activity_threshold = int((activity_threshold / 100) * len(ocel.events))
-        path_threshold = int((path_threshold / 100) * len(ocel.objects))
+        activity_threshold = int(((100 - activity_threshold) / 100) * len(pm4py.ocel.ocel_object_type_activities(ocel)))
+        path_threshold = int(((100 - path_threshold) / 100) * len(ocel.objects))
 
     parameters = {
+
         classic.Parameters.FORMAT: 'svg',
         classic.Parameters.ANNOTATION: "frequency",
         classic.Parameters.ACT_METRIC: filters.get("annotation_type", "unique_objects"),
