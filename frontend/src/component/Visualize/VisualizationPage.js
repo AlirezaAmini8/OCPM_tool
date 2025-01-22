@@ -47,11 +47,11 @@ const VisualizationPage = () => {
 
     // Zoom handlers
     const handleZoomIn = () => {
-        setScale((prevScale) => prevScale * 1.2);
+        setScale((prevScale) => Math.min(prevScale * 1.2, 5));
     };
 
     const handleZoomOut = () => {
-        setScale((prevScale) => prevScale / 1.2);
+        setScale((prevScale) => Math.max(prevScale / 1.2, 0.2));
     };
 
     const handleResetZoom = () => {
@@ -151,28 +151,48 @@ const VisualizationPage = () => {
                 graphContainer.current.innerHTML = '';
 
                 const svgContainer = document.createElement('div');
-                svgContainer.style.transform = `scale(${scale})`;
-                svgContainer.style.transformOrigin = 'center';
-                svgContainer.style.transition = 'transform 0.2s ease-out';
+                svgContainer.style.width = '100%';
+                svgContainer.style.height = '100%';
+                svgContainer.style.overflow = 'auto';
+                svgContainer.className = 'svg-container';
 
                 svgContainer.innerHTML = graph;
 
                 const newSvg = svgContainer.querySelector('svg');
                 if (newSvg) {
-                    newSvg.style.width = '100%';
-                    newSvg.style.height = '100%';
-                    newSvg.style.maxWidth = '100%';
-
+                    newSvg.style.width = `${100 * scale}%`;
+                    newSvg.style.height = `${100 * scale}%`;
+                    newSvg.style.maxWidth = 'none';
+                    newSvg.style.transition = 'width 0.2s ease-out, height 0.2s ease-out';
                     newSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
                 }
 
                 graphContainer.current.appendChild(svgContainer);
+
+                const styleSheet = document.createElement('style');
+                styleSheet.textContent = `
+                    .svg-container {
+                        cursor: grab;
+                    }
+                    .svg-container:active {
+                        cursor: grabbing;
+                    }
+                `;
+                document.head.appendChild(styleSheet);
             }
         } catch (err) {
             setError('Error displaying SVG. Please ensure the file is valid.');
             console.error('Error:', err);
         }
     }, [graph, navigate, scale]);
+
+    useEffect(() => {
+        const svg = graphContainer.current?.querySelector('svg');
+        if (svg) {
+            svg.style.width = `${100 * scale}%`;
+            svg.style.height = `${100 * scale}%`;
+        }
+    }, [scale]);
 
     return (
         <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -358,11 +378,7 @@ const VisualizationPage = () => {
             >
                 {/* Error Alert */}
                 {error && (
-                    <Alert
-                        severity="error"
-                        sx={{ mb: 2 }}
-                        onClose={() => setError(null)}
-                    >
+                    <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
                         {error}
                     </Alert>
                 )}
@@ -372,11 +388,17 @@ const VisualizationPage = () => {
                     ref={graphContainer}
                     sx={{
                         flexGrow: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        overflow: 'auto',
+                        position: 'relative',
+                        overflow: 'hidden',
                         backgroundColor: '#f9f9f9',
+                        '& .svg-container': {
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            overflow: 'auto',
+                        },
                     }}
                 >
                     {!graph && !error && (
