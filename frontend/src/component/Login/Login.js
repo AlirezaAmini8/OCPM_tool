@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { authContext } from "../../App";
 import axios from 'axios';
 import ParticlesBg from 'particles-bg';
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
@@ -23,6 +24,9 @@ export default function Login() {
     const navigate = useNavigate();
     const [loginError, setLoginError] = useState(null);
 
+    const handleBackClick = () => {
+        navigate('/');
+    };
     const handleSubmit = async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -65,6 +69,20 @@ export default function Login() {
                 borderRadius: 2,
                 boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.5)'
             }}>
+                <Box sx={{ display: 'flex', alignSelf: 'flex-start', mb: 2 }}>
+                    <IconButton
+                        onClick={handleBackClick}
+                        sx={{
+                            color: 'white',
+                            backgroundColor: 'blue',
+                            '&:hover': {
+                                backgroundColor: 'darkblue',
+                            },
+                        }}
+                    >
+                        <ArrowBackIcon />
+                    </IconButton>
+                </Box>
                 <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
                     <LockOutlinedIcon />
                 </Avatar>

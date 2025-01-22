@@ -41,10 +41,6 @@ const VisualizationPage = () => {
     // State for managing the dropdown open/close
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
-
-    // Track the previous visualization type
-    const [previousVisualizationType, setPreviousVisualizationType] = useState(visualizationType);
-
     // Zoom handlers
     const handleZoomIn = () => {
         setScale((prevScale) => prevScale * 1.2);
@@ -82,7 +78,7 @@ const VisualizationPage = () => {
         setActivityPercent(newValue);
     };
 
-    const handlePathPercentChange = (event, newValue) => {
+    const handleEdgePercentChange = (event, newValue) => {
         setPathPercent(newValue);
     };
 
@@ -112,12 +108,10 @@ const VisualizationPage = () => {
                 annotationType,
                 orientation,
                 unselectedObjects,
-                previousVisualizationType,
                 file_metadata_id,
             })
             .then((response) => {
                 console.log('Filters applied successfully:', response.data)
-                setPreviousVisualizationType(response.data.previousVisualizationType);
                 navigate('/visualization', {
                     state: {
                         graph: response.data.graph,
@@ -189,37 +183,64 @@ const VisualizationPage = () => {
             >
                 <Container maxWidth="xl">
                     <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
-                        {/* Slider for % of Activities */}
-                        <Box sx={{ width: '200px' }}>
-                            <Typography gutterBottom sx={{ color: 'red' }}>
-                                % of Activities
-                            </Typography>
-                            <Slider
-                                value={activityPercent}
-                                onChange={handleActivityPercentChange}
-                                aria-labelledby="activity-percent-slider"
-                                valueLabelDisplay="auto"
-                                min={0}
-                                max={100}
-                                sx={{ color: '#ff4F00' }}
-                            />
-                        </Box>
+                        {/* Conditionally render Activity Percent Slider for OC-DFG */}
+                        {visualizationType === 'ocdfg' && (
+                            <Box sx={{ width: '200px' }}>
+                                <Typography gutterBottom sx={{ color: 'red' }}>
+                                    % of Activities
+                                </Typography>
+                                <Slider
+                                    value={activityPercent}
+                                    onChange={handleActivityPercentChange}
+                                    aria-labelledby="activity-percent-slider"
+                                    valueLabelDisplay="auto"
+                                    min={0}
+                                    max={100}
+                                    sx={{ color: '#ff4F00' }}
+                                />
+                            </Box>
+                        )}
 
-                        {/* Slider for % of Paths */}
-                        <Box sx={{ width: '200px' }}>
-                            <Typography gutterBottom sx={{ color: 'red' }}>
-                                % of Paths
-                            </Typography>
-                            <Slider
-                                value={pathPercent}
-                                onChange={handlePathPercentChange}
-                                aria-labelledby="path-percent-slider"
-                                valueLabelDisplay="auto"
-                                min={0}
-                                max={100}
-                                sx={{ color: '#ff4F00' }}
-                            />
-                        </Box>
+                        {/* Conditionally render edge Percent Slider for OC-DFG */}
+                        {visualizationType === 'ocdfg' && (
+                            <Box sx={{ width: '200px' }}>
+                                <Typography gutterBottom sx={{ color: 'red' }}>
+                                    % of Edges
+                                </Typography>
+                                <Slider
+                                    value={pathPercent}
+                                    onChange={handleEdgePercentChange}
+                                    aria-labelledby="path-percent-slider"
+                                    valueLabelDisplay="auto"
+                                    min={0}
+                                    max={100}
+                                    sx={{ color: '#ff4F00' }}
+                                />
+                            </Box>
+                        )}
+
+                        {/* Conditionally render Annotation Type Selector for OC-DFG */}
+                        {visualizationType === 'ocdfg' && (
+                            <FormControl sx={{ minWidth: '150px' }}>
+                                <InputLabel sx={{ color: 'white' }}>Annotation</InputLabel>
+                                <Select
+                                    value={annotationType}
+                                    onChange={handleAnnotationTypeChange}
+                                    label="Annotation"
+                                    sx={{
+                                        backgroundColor: '#63007C',
+                                        color: 'white',
+                                        '& .MuiSelect-icon': {
+                                            color: 'white',
+                                        },
+                                    }}
+                                >
+                                    <MenuItem value="unique_objects">Unique Objects (UO)</MenuItem>
+                                    <MenuItem value="events">Events</MenuItem>
+                                    <MenuItem value="total_objects">Total Objects</MenuItem>
+                                </Select>
+                            </FormControl>
+                        )}
 
                         {/* Selector for Visualization Type */}
                         <FormControl sx={{ minWidth: '150px' }}>
@@ -238,27 +259,6 @@ const VisualizationPage = () => {
                             >
                                 <MenuItem value="ocdfg">OC-DFG</MenuItem>
                                 <MenuItem value="oc_petri_net">OC-Petri Net</MenuItem>
-                            </Select>
-                        </FormControl>
-
-                        {/* Selector for Annotation Type */}
-                        <FormControl sx={{ minWidth: '150px' }}>
-                            <InputLabel sx={{ color: 'white' }}>Annotation</InputLabel>
-                            <Select
-                                value={annotationType}
-                                onChange={handleAnnotationTypeChange}
-                                label="Annotation"
-                                sx={{
-                                    backgroundColor: '#63007C',
-                                    color: 'white',
-                                    '& .MuiSelect-icon': {
-                                        color: 'white',
-                                    },
-                                }}
-                            >
-                                <MenuItem value="unique_objects">Unique Objects (UO)</MenuItem>
-                                <MenuItem value="events">Events</MenuItem>
-                                <MenuItem value="total_objects">Total Objects</MenuItem>
                             </Select>
                         </FormControl>
 

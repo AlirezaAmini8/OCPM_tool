@@ -21,10 +21,6 @@ export default function Signup() {
     const [signupSuccess, setSignupSuccess] = useState(false);
     const navigate = useNavigate();
 
-    const handleBackClick = () => {
-        navigate('/');
-    };
-
     const handleSubmit = async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -44,6 +40,10 @@ export default function Signup() {
                 setSignupError('An unexpected error occurred. Please try again.');
             }
         }
+    };
+
+    const handleBackClick = () => {
+        navigate('/');
     };
 
     return (

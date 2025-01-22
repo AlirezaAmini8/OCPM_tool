@@ -2,12 +2,10 @@ import os
 import pickle
 
 import uuid
-import boto3
 import pm4py
 from pm4py.visualization.ocel.ocdfg.variants import classic
 from pm4py.visualization.ocel.ocpn import visualizer as ocpn_visualizer
-
-from ocel_mining_tool import settings
+from pm4py.visualization.ocel.ocpn.variants import wo_decoration
 
 
 def discover(ocel, is_ocdfg):
@@ -38,19 +36,7 @@ def discover_ocdfg(ocdfg, parameters):
     return get_content(gviz)
 
 
-def readFromS3(file_name, file_path):
-    s3_client = boto3.client(
-        's3',
-        endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
-    )
-    download_path = os.path.join(settings.MEDIA_ROOT, file_name)
-    s3_client.download_file(settings.AWS_STORAGE_BUCKET_NAME, file_path, download_path)
-    return download_path
-
-
-def filter_ocel(ocel, filters=None):
+def filter_ocel_ocdfg(ocel, ocdfg=None, filters=None):
     if filters is None:
         filters = {
             "activity_percent": 90,
@@ -62,6 +48,7 @@ def filter_ocel(ocel, filters=None):
 
     if filters.get("selected_objects"):
         ocel = pm4py.filter_ocel_object_types(ocel, filters["selected_objects"])
+        ocdfg = discover(ocel, True)
 
     activity_threshold = 0
     path_threshold = 0
@@ -70,11 +57,10 @@ def filter_ocel(ocel, filters=None):
         activity_threshold = filters.get("activity_percent", 10)
         path_threshold = filters.get("path_percent", 10)
 
-        activity_threshold = int(((100 - activity_threshold) / 100) * len(pm4py.ocel.ocel_object_type_activities(ocel)))
+        activity_threshold = int(((100 - activity_threshold) / 100) * len(ocel.events))
         path_threshold = int(((100 - path_threshold) / 100) * len(ocel.objects))
 
     parameters = {
-
         classic.Parameters.FORMAT: 'svg',
         classic.Parameters.ANNOTATION: "frequency",
         classic.Parameters.ACT_METRIC: filters.get("annotation_type", "unique_objects"),
@@ -86,7 +72,27 @@ def filter_ocel(ocel, filters=None):
         "rankdir": filters.get("orientation", "LR")
     }
 
-    return parameters
+    return parameters, ocdfg
+
+
+def filter_ocel_ocpn(ocel, ocpn=None, filters=None):
+    if filters is None:
+        filters = {
+            "selected_objects": None,
+            "orientation": "LR"
+        }
+
+    if filters.get("selected_objects"):
+        ocel = pm4py.filter_ocel_object_types(ocel, filters["selected_objects"])
+        ocpn = discover(ocel, False)
+
+    parameters = {
+        wo_decoration.Parameters.FORMAT: 'svg',
+        wo_decoration.Parameters.BGCOLOR: 'white',
+        wo_decoration.Parameters.RANKDIR: filters.get("orientation", "LR")
+    }
+
+    return parameters, ocpn
 
 
 def serialize_in_file(discovered):
