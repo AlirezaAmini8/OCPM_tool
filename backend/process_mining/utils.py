@@ -39,8 +39,8 @@ def discover_ocdfg(ocdfg, parameters):
 def filter_ocel_ocdfg(ocel, ocdfg=None, filters=None):
     if filters is None:
         filters = {
-            "activity_percent": 90,
-            "path_percent": 90,
+            "activity_percent": 10,
+            "path_percent": 10,
             "selected_objects": None,
             "annotation_type": "unique_objects",
             "orientation": "LR"
@@ -54,22 +54,29 @@ def filter_ocel_ocdfg(ocel, ocdfg=None, filters=None):
     path_threshold = 0
 
     if filters.get("activity_percent") or filters.get("path_percent"):
-        activity_threshold = filters.get("activity_percent", 10)
-        path_threshold = filters.get("path_percent", 10)
+        activity_percent = filters.get("activity_percent", 10)
+        path_percent = filters.get("path_percent", 10)
 
-        activity_threshold = int(((100 - activity_threshold) / 100) * len(ocel.events))
-        path_threshold = int(((100 - path_threshold) / 100) * len(ocel.objects))
+        activity_threshold, path_threshold = compute_percentage_thresholds(
+            ocdfg,
+            activity_percent,
+            path_percent,
+            act_metric=filters.get("annotation_type", "unique_objects"),
+            edge_metric="event_couples" if filters.get("annotation_type") == 'events' else
+            filters.get("annotation_type"),
+        )
 
     parameters = {
         classic.Parameters.FORMAT: 'svg',
         classic.Parameters.ANNOTATION: "frequency",
         classic.Parameters.ACT_METRIC: filters.get("annotation_type", "unique_objects"),
-        classic.Parameters.EDGE_METRIC: filters.get("annotation_type", "unique_objects"),
+        classic.Parameters.EDGE_METRIC: "event_couples" if filters.get("annotation_type") == 'events'
+        else filters.get("annotation_type"),
         classic.Parameters.ACT_THRESHOLD: activity_threshold,
         classic.Parameters.EDGE_THRESHOLD: path_threshold,
         classic.Parameters.PERFORMANCE_AGGREGATION_MEASURE: 'mean',
-        "bgcolor": 'white',
-        "rankdir": filters.get("orientation", "LR")
+        classic.Parameters.BGCOLOR: 'white',
+        classic.Parameters.RANKDIR: filters.get("orientation", "LR")
     }
 
     return parameters, ocdfg
@@ -106,3 +113,42 @@ def deserialize_file(serialized_graph_path):
     with open(serialized_graph_path, 'rb') as f:
         discovered = pickle.load(f)
     return discovered
+
+
+def compute_percentage_thresholds(ocdfg, activity_percent, path_percent, act_metric="events", edge_metric="event_couples"):
+    if act_metric == "events":
+        act_count = ocdfg["activities_indep"]["events"]
+    elif act_metric == "unique_objects":
+        act_count = ocdfg["activities_indep"]["unique_objects"]
+    elif act_metric == "total_objects":
+        act_count = ocdfg["activities_indep"]["total_objects"]
+    else:
+        raise ValueError("Invalid activity metric")
+
+    if edge_metric == "event_couples":
+        edges_count = ocdfg["edges"]["event_couples"]
+    elif edge_metric == "unique_objects":
+        edges_count = ocdfg["edges"]["unique_objects"]
+    elif edge_metric == "total_objects":
+        edges_count = ocdfg["edges"]["total_objects"]
+    else:
+        raise ValueError("Invalid edge metric")
+
+    # Calculate activity threshold
+    act_frequencies = [len(v) for v in act_count.values()]
+    sorted_act = sorted(act_frequencies, reverse=True)
+    act_cutoff_idx = int((activity_percent / 100) * len(sorted_act))
+    act_cutoff_idx = max(0, min(act_cutoff_idx, len(sorted_act)-1))
+    activity_threshold = sorted_act[act_cutoff_idx] if sorted_act else 0
+
+    # Calculate edge threshold
+    edge_frequencies = []
+    for ot in edges_count:
+        for edge in edges_count[ot]:
+            edge_frequencies.append(len(edges_count[ot][edge]))
+    sorted_edge = sorted(edge_frequencies, reverse=True)
+    edge_cutoff_idx = int((path_percent / 100) * len(sorted_edge))
+    edge_cutoff_idx = max(0, min(edge_cutoff_idx, len(sorted_edge)-1))
+    edge_threshold = sorted_edge[edge_cutoff_idx] if sorted_edge else 0
+
+    return activity_threshold, edge_threshold

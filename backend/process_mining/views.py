@@ -47,7 +47,7 @@ class UploadOCELFileView(APIView):
             ocdfg = discover(ocel, True)
             ocdfg_path = serialize_in_file(ocdfg)
 
-            params, _ = filter_ocel_ocdfg(ocel)
+            params, ocdfg = filter_ocel_ocdfg(ocel, ocdfg)
 
             graph_data = discover_ocdfg(ocdfg, params)
 
