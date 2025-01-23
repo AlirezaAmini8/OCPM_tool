@@ -40,7 +40,17 @@ class UploadOCELFileView(APIView):
                     temp_file.write(chunk)
                 temp_file_path = temp_file.name
 
-            ocel = pm4py.read_ocel(temp_file_path)
+            ocel = None
+            try:
+                ocel = pm4py.read_ocel(temp_file_path)
+            except Exception as e:
+                logger.warning(f"Failed to read OCEL with pm4py.read_ocel: {str(e)}. Trying pm4py.read_ocel2.")
+                try:
+                    ocel = pm4py.read_ocel2(temp_file_path)
+                except Exception as e:
+                    logger.error(f"Failed to read OCEL with pm4py.read_ocel2: {str(e)}")
+                    raise ValueError("Unable to read the provided JSON-OCEL file.")
+
             object_types = pm4py.ocel_get_object_types(ocel)
             ocel_path = serialize_in_file(ocel)
 
