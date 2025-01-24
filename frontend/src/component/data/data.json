@@ -16,6 +16,11 @@
       {
         "label": "Upload OCEL File",
         "color": "#FF0000"
+      },
+      {
+        "label": "Dashboard",
+        "action": "/dashboard",
+        "color": "#63007C"
       }
     ]
   }

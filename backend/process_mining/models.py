@@ -10,6 +10,7 @@ class FileMetadata(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     ocdfg_path = models.CharField(max_length=255, null=True, blank=True)
     ocpn_path = models.CharField(max_length=255, null=True, blank=True)
+    object_types = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.file_name

@@ -3,7 +3,7 @@ import { Button, Typography, Container, Grid2, darken } from '@mui/material';
 import ParticlesBg from "particles-bg";
 import { Link } from 'react-router-dom';
 
-const Header = ({ data, onUploadButtonClick }) => {
+const Header = ({ data, onUploadButtonClick, onButtonClick, isLoggedIn }) => {
     return (
         <header id="header" style={{ position: 'relative' }}>
             <ParticlesBg type="circle" bg={{ zIndex: 0, position: "center", top: 0 }} />
@@ -20,24 +20,32 @@ const Header = ({ data, onUploadButtonClick }) => {
                                 </Typography>
                                 <div>
                                     {data?.buttons && data.buttons.length > 0 ? (
-                                        data.buttons.map((button, index) => (
-                                            <Button
-                                                key={index}
-                                                variant="contained"
-                                                sx={{
-                                                    margin: '10px',
-                                                    backgroundColor: button.color,
-                                                    '&:hover': {
-                                                        backgroundColor: button.color ? darken(button.color, 0.2) : '#FF3D00',
-                                                    }
-                                                }}
-                                                component={Link}
-                                                to={button.action}
-                                                onClick={button.label === 'Upload OCEL File' ? onUploadButtonClick : undefined}
-                                            >
-                                                {button.label}
-                                            </Button>
-                                        ))
+                                        data.buttons.map((button, index) => {
+                                            if ((button.label === 'Login' || button.label === 'Sign Up') && isLoggedIn) {
+                                                return null;
+                                            }
+                                            if (button.label === 'Dashboard' && !isLoggedIn) {
+                                                return null;
+                                            }
+                                            return (
+                                                <Button
+                                                    key={index}
+                                                    variant="contained"
+                                                    sx={{
+                                                        margin: '10px',
+                                                        backgroundColor: button.color,
+                                                        '&:hover': {
+                                                            backgroundColor: button.color ? darken(button.color, 0.2) : '#FF3D00',
+                                                        }
+                                                    }}
+                                                    component={button.label === 'Upload OCEL File' ? undefined : Link}
+                                                    to={button.label === 'Upload OCEL File' ? undefined : button.action}
+                                                    onClick={() => onButtonClick(button)}
+                                                >
+                                                    {button.label}
+                                                </Button>
+                                            );
+                                        })
                                     ) : (
                                         <Typography variant="body1" sx={{ marginBottom: 2 }}>
                                             No buttons available.

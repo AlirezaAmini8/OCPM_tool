@@ -1,15 +1,19 @@
 import os
 import tempfile
 import logging
+from rest_framework.authtoken.models import Token
+
 
 import pm4py
 from rest_framework import status
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import FileMetadata
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
+from .serializers import FileMetadataSerializer
 from .utils import discover, discover_ocdfg, discover_oc_petri_net, serialize_in_file, \
     deserialize_file, filter_ocel_ocdfg, filter_ocel_ocpn
 
@@ -17,7 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 class UploadOCELFileView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = (AllowAny,)
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
 
     def post(self, request):
         if 'file' not in request.FILES:
@@ -33,7 +38,14 @@ class UploadOCELFileView(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            username = request.user.username if request.user.is_authenticated else None
+            token_key = request.META.get('HTTP_AUTHORIZATION', '').split('Token ')[-1]
+            try:
+                token = Token.objects.get(key=token_key)
+                user = token.user
+            except Token.DoesNotExist:
+                user = None
+
+            user = user or (request.user if request.user.is_authenticated else None)
 
             with tempfile.NamedTemporaryFile(suffix=".jsonocel", delete=False) as temp_file:
                 for chunk in file.chunks():
@@ -64,8 +76,9 @@ class UploadOCELFileView(APIView):
             file_metadata = FileMetadata.objects.create(
                 ocel_path=ocel_path,
                 file_name=file.name,
-                username=username,
-                ocdfg_path=ocdfg_path
+                username=user,
+                ocdfg_path=ocdfg_path,
+                object_types=object_types
             )
             os.remove(temp_file_path)
 
@@ -161,3 +174,42 @@ def apply_ocpn_filters_view(request):
     except Exception as e:
         logger.error(f"Error applying filters: {str(e)}")
         return Response({'error': 'Error processing the file'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UserFilesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        files = FileMetadata.objects.filter(username=request.user)
+        serializer = FileMetadataSerializer(files, many=True)
+        return Response(serializer.data)
+
+
+class RetrieveFileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, file_id):
+        try:
+            file_metadata = FileMetadata.objects.get(id=file_id, username=request.user)
+        except FileMetadata.DoesNotExist:
+            return Response({'error': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            ocdfg = deserialize_file(file_metadata.ocdfg_path)
+            filters = {
+                "activity_percent": 10,
+                "path_percent": 10,
+                "selected_objects": None,
+                "annotation_type": "unique_objects",
+                "orientation": "LR"
+            }
+            parameters, _ = filter_ocel_ocdfg(None, filters=filters)
+            graph_data = discover_ocdfg(ocdfg, parameters)
+            return Response({
+                'graph': graph_data,
+                'objects': file_metadata.object_types,
+                'file_metadata_id': file_metadata.id
+            })
+        except Exception as e:
+            logger.error(f"Error retrieving file: {str(e)}")
+            return Response({'error': 'Error processing the file'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

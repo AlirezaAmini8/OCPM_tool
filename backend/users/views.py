@@ -28,7 +28,7 @@ class UserSignupView(APIView):
 
 
 class UserLoginView(APIView):
-    permission_classes = (AllowAny,)
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -36,19 +36,23 @@ class UserLoginView(APIView):
             username = serializer.validated_data["username"]
             password = serializer.validated_data["password"]
             user = authenticate(username=username, password=password)
-            if user is not None:
+            if user:
+                # Get or create a token for the user
                 token, created = Token.objects.get_or_create(user=user)
                 return Response({
                     "status": status.HTTP_200_OK,
                     "message": "Login successful",
                     "data": {
-                        "token": token.key
+                        "token": token.key,
+                        "user_id": user.id,
+                        "username": user.username
                     }
                 }, status=status.HTTP_200_OK)
-            return Response({
-                "status": status.HTTP_401_UNAUTHORIZED,
-                "message": "Invalid username or password",
-            }, status=status.HTTP_401_UNAUTHORIZED)
+            else:
+                return Response({
+                    "status": status.HTTP_401_UNAUTHORIZED,
+                    "message": "Invalid username or password",
+                }, status=status.HTTP_401_UNAUTHORIZED)
         return Response({
             "status": status.HTTP_400_BAD_REQUEST,
             "message": "Bad request",

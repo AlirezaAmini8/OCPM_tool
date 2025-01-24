@@ -18,12 +18,15 @@ from django.contrib import admin
 from django.urls import path
 
 from users.views import UserLoginView, UserSignupView
-from process_mining.views import UploadOCELFileView, ApplyFilterView
+from process_mining.views import UploadOCELFileView, ApplyFilterView, UserFilesView, RetrieveFileView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('upload/', UploadOCELFileView.as_view(), name='upload-ocel-file'),
     path("signup/", UserSignupView.as_view(), name="sign-up"),
     path("login/", UserLoginView.as_view(), name="log-in"),
     path("filters/", ApplyFilterView.as_view(), name="filtering"),
+    path('api/user-files/', UserFilesView.as_view(), name='user-files'),
+    path('api/files/<int:file_id>/', RetrieveFileView.as_view(), name='retrieve-file'),
 ]
 
