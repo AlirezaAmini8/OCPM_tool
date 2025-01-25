@@ -39,6 +39,7 @@ export default function Login() {
 
             if (response.status === 200 && response.data.data.token) {
                 sessionStorage.setItem('token', response.data.data.token);
+                sessionStorage.setItem('isAuthenticated', 'true');
                 setAuth(true);
                 navigate('/dashboard');
             } else {

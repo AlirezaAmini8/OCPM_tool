@@ -20,6 +20,7 @@ const UploadModal = ({ open, setOpen }) => {
     const handleUpload = () => {
         if (!file) return;
 
+        handleClose();
         setLoading(true);
         setShowSpinner(true);
 
@@ -30,6 +31,9 @@ const UploadModal = ({ open, setOpen }) => {
             .post('http://localhost:8000/upload/', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
+                    ...(sessionStorage.getItem('token')
+                        ? { 'Authorization': `Token ${sessionStorage.getItem('token')}` }
+                        : {})
                 },
             })
             .then((response) => {
@@ -51,7 +55,7 @@ const UploadModal = ({ open, setOpen }) => {
 
     return (
         <>
-            <Modal open={open} onClose={handleClose}>
+            <Modal open={open} onClose={handleClose} sx={{ zIndex: 500 }}>
                 <Box
                     sx={{
                         width: 400,

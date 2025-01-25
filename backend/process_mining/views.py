@@ -203,7 +203,7 @@ class RetrieveFileView(APIView):
                 "annotation_type": "unique_objects",
                 "orientation": "LR"
             }
-            parameters, _ = filter_ocel_ocdfg(None, filters=filters)
+            parameters, _ = filter_ocel_ocdfg(None, ocdfg, filters=filters)
             graph_data = discover_ocdfg(ocdfg, parameters)
             return Response({
                 'graph': graph_data,
