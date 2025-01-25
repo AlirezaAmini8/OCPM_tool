@@ -38,8 +38,37 @@ const Dashboard = () => {
         fetchFiles();
     }, [auth, navigate]);
 
+    const [deletingFiles, setDeletingFiles] = useState(new Set());
+    const handleDeleteFile = async (fileId, event) => {
+        event.stopPropagation();
+        if (!window.confirm('Are you sure you want to delete this file?')) return;
+
+        try {
+            setDeletingFiles(prev => new Set([...prev, fileId]));
+            const token = sessionStorage.getItem('token');
+            await axios.delete(`http://localhost:8000/api/files/${fileId}/`, {
+                headers: { Authorization: `Token ${token}` }
+            });
+            setFiles(prevFiles => prevFiles.filter(file => file.id !== fileId));
+        } catch (error) {
+            setError('Failed to delete file');
+        } finally {
+            setDeletingFiles(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(fileId);
+                return newSet;
+            });
+        }
+    };
+
+    const [fileLoading, setFileLoading] = useState(false);
+    const [selectedFileId, setSelectedFileId] = useState(null);
+
     const handleFileClick = async (fileId) => {
         try {
+            setFileLoading(true);
+            setSelectedFileId(fileId);
+
             const token = sessionStorage.getItem('token');
             const response = await axios.get(`http://localhost:8000/api/files/${fileId}/`, {
                 headers: { Authorization: `Token ${token}` }
@@ -53,6 +82,9 @@ const Dashboard = () => {
             });
         } catch (error) {
             setError('Failed to load file');
+        }finally {
+            setFileLoading(false);
+            setSelectedFileId(null);
         }
     };
 
@@ -67,8 +99,27 @@ const Dashboard = () => {
         return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
+    const fileLoadingOverlay = (
+        <Box sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 9999,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        }}>
+            <CircularProgress sx={{ color: 'white' }} />
+        </Box>
+    );
+
+
     return (
         <Box sx={{ minHeight: '100vh', position: 'relative' }}>
+            {fileLoading && fileLoadingOverlay}
             <ParticlesBg type="circle" bg={true} />
             <Box sx={{
                 padding: 4,
@@ -141,13 +192,15 @@ const Dashboard = () => {
                                 key={file.id}
                                 sx={{
                                     '&:hover': {
-                                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                                        cursor: 'pointer'
+                                        backgroundColor: fileLoading ? 'rgba(0, 0, 0, 0.04)' : 'rgba(0, 0, 0, 0.04)',
+                                        cursor: fileLoading ? 'not-allowed' : 'pointer'
                                     },
                                     borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
-                                    py: 2
+                                    py: 2,
+                                    opacity: selectedFileId === file.id ? 0.5 : 1
                                 }}
-                                onClick={() => handleFileClick(file.id)}
+                                onClick={() => !fileLoading && handleFileClick(file.id)}
+                                disabled={fileLoading}
                             >
                                 <ListItemAvatar>
                                     <Avatar sx={{ bgcolor: '#63007C' }}>
@@ -166,8 +219,17 @@ const Dashboard = () => {
                                         </Typography>
                                     }
                                 />
-                                <IconButton edge="end" aria-label="delete">
-                                    <DeleteIcon />
+                                <IconButton
+                                    edge="end"
+                                    aria-label="delete"
+                                    onClick={(e) => handleDeleteFile(file.id, e)}
+                                    disabled={fileLoading || deletingFiles.has(file.id)}
+                                >
+                                    {deletingFiles.has(file.id) ? (
+                                        <CircularProgress size={24} sx={{ color: '#63007C' }} />
+                                    ) : (
+                                        <DeleteIcon />
+                                    )}
                                 </IconButton>
                             </ListItem>
                         ))}

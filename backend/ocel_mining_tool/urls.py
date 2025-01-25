@@ -28,5 +28,6 @@ urlpatterns = [
     path("filters/", ApplyFilterView.as_view(), name="filtering"),
     path('api/user-files/', UserFilesView.as_view(), name='user-files'),
     path('api/files/<int:file_id>/', RetrieveFileView.as_view(), name='retrieve-file'),
+    path('api/files/<int:file_id>/', RetrieveFileView.as_view(), name='file-detail'),
 ]
 

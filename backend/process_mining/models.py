@@ -1,3 +1,5 @@
+import os
+
 from django.db import models
 
 from users.models import User
@@ -14,3 +16,13 @@ class FileMetadata(models.Model):
 
     def __str__(self):
         return self.file_name
+
+    def delete(self, *args, **kwargs):
+        for path_field in [self.ocel_path, self.ocdfg_path, self.ocpn_path]:
+            if path_field and os.path.isfile(path_field):
+                try:
+                    os.remove(path_field)
+                except Exception as e:
+                    print(f"Error deleting file {path_field}: {e}")
+
+        super().delete(*args, **kwargs)

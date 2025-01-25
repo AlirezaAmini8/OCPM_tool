@@ -213,3 +213,25 @@ class RetrieveFileView(APIView):
         except Exception as e:
             logger.error(f"Error retrieving file: {str(e)}")
             return Response({'error': 'Error processing the file'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def delete(self, request, file_id):
+        try:
+            file_metadata = FileMetadata.objects.get(id=file_id, username=request.user)
+
+            for path_field in [file_metadata.ocel_path,
+                               file_metadata.ocdfg_path,
+                               file_metadata.ocpn_path]:
+                if path_field and os.path.exists(path_field):
+                    try:
+                        os.remove(path_field)
+                    except Exception as e:
+                        logger.error(f"Error deleting file {path_field}: {e}")
+
+            file_metadata.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        except FileMetadata.DoesNotExist:
+            return Response({'error': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error deleting file: {str(e)}")
+            return Response({'error': 'Error deleting file'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
