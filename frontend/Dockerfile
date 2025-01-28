@@ -1,4 +1,4 @@
-FROM docker.arvancloud.ir/node:20.10.0
+FROM node:latest
 
 WORKDIR /app
 

@@ -5,6 +5,7 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import axios from 'axios';
 import ParticlesBg from 'particles-bg';
 import UploadModal from '../UploadFile/UploadModal';
+import ConfirmDialog from './ConfirmDialog';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { authContext } from "../../App";
 
@@ -15,6 +16,7 @@ const Dashboard = () => {
     const [openModal, setOpenModal] = useState(false);
     const navigate = useNavigate();
     const { auth } = useContext(authContext);
+    const [confirmDialog, setConfirmDialog] = useState({ open: false, fileId: null });
 
     useEffect(() => {
         if (!auth) {
@@ -41,8 +43,11 @@ const Dashboard = () => {
     const [deletingFiles, setDeletingFiles] = useState(new Set());
     const handleDeleteFile = async (fileId, event) => {
         event.stopPropagation();
-        if (!window.confirm('Are you sure you want to delete this file?')) return;
+        setConfirmDialog({ open: true, fileId });
+    };
 
+    const handleConfirmDelete = async () => {
+        const fileId = confirmDialog.fileId;
         try {
             setDeletingFiles(prev => new Set([...prev, fileId]));
             const token = sessionStorage.getItem('token');
@@ -58,6 +63,7 @@ const Dashboard = () => {
                 newSet.delete(fileId);
                 return newSet;
             });
+            setConfirmDialog({ open: false, fileId: null });
         }
     };
 
@@ -237,6 +243,14 @@ const Dashboard = () => {
                 )}
 
                 <UploadModal open={openModal} setOpen={setOpenModal} />
+
+                <ConfirmDialog
+                    open={confirmDialog.open}
+                    onClose={() => setConfirmDialog({ open: false, fileId: null })}
+                    onConfirm={handleConfirmDelete}
+                    title="Delete File"
+                    message="Are you sure you want to delete this file? This action cannot be undone."
+                />
             </Box>
         </Box>
     );
