@@ -1,15 +1,21 @@
 services:
-#  web:
-#    build: .
-#    ports:
-#      - "8000:8000"
-#    depends_on:
-#      - postgres
-#      - minio
+  web:
+    build: .
+    container_name: backend-container
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ocel_db
+    depends_on:
+      - postgres
+    networks:
+      - app-network
 
   postgres:
     image: postgres
     container_name: postgres-container
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -18,16 +24,26 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
-#  frontend:
-#    build:
-#      context: ../frontend
-#      dockerfile: Dockerfile
-#    container_name: frontend-container
-#    ports:
-#      - "3000:3000"
-#    depends_on:
-#      - web
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: frontend-container
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - web
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   postgres_data:
+    driver: local
