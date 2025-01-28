@@ -53,8 +53,8 @@ const ConfirmDialog = ({ open, onClose, onConfirm, title, message }) => {
                     variant="contained"
                     color="error"
                     sx={{
-                        bgcolor: '#dc820e',
-                        '&:hover': { bgcolor: '#c57100' }
+                        bgcolor: '#1b00ff',
+                        '&:hover': { bgcolor: '#1300a4' }
                     }}
                 >
                     Delete
