@@ -50,21 +50,17 @@ def filter_ocel_ocdfg(ocel, ocdfg=None, filters=None):
         ocel = pm4py.filter_ocel_object_types(ocel, filters["selected_objects"])
         ocdfg = discover(ocel, True)
 
-    activity_threshold = 0
-    path_threshold = 0
+    activity_percent = filters.get("activity_percent", 10)
+    path_percent = filters.get("path_percent", 10)
 
-    if filters.get("activity_percent") or filters.get("path_percent"):
-        activity_percent = filters.get("activity_percent", 10)
-        path_percent = filters.get("path_percent", 10)
-
-        activity_threshold, path_threshold = compute_percentage_thresholds(
+    activity_threshold, path_threshold = compute_percentage_thresholds(
             ocdfg,
             activity_percent,
             path_percent,
             act_metric=filters.get("annotation_type", "unique_objects"),
             edge_metric="event_couples" if filters.get("annotation_type") == 'events' else
             filters.get("annotation_type"),
-        )
+    )
 
     parameters = {
         classic.Parameters.FORMAT: 'svg',
