@@ -114,7 +114,8 @@ def apply_ocdfg_filters_view(request):
         "path_percent": data.get('pathPercent', 90),
         "selected_objects": data.get('unselectedObjects'),
         "annotation_type": data.get('annotationType', 'unique_objects'),
-        "orientation": 'TB' if data.get('orientation') == 'vertical' else 'LR'
+        "orientation": 'TB' if data.get('orientation') == 'vertical' else 'LR',
+        "format": data.get('format', 'svg')
     }
 
     try:
@@ -148,7 +149,8 @@ def apply_ocpn_filters_view(request):
 
     filters = {
         "selected_objects": data.get('unselectedObjects'),
-        "orientation": 'TB' if data.get('orientation') == 'vertical' else 'LR'
+        "orientation": 'TB' if data.get('orientation') == 'vertical' else 'LR',
+        "format": data.get('format', 'svg')
     }
 
     try:

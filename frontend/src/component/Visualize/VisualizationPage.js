@@ -20,38 +20,65 @@ import {
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import RestoreIcon from '@mui/icons-material/Restore';
+import InteractiveGraph from './InteractiveGraph';
+import GraphVisualizer from "./GraphVisualizer";
+import DotGraphVisualization from "./DotGraphVisualization";
+import GraphRenderer from "./GraphRenderer";
 
 const VisualizationPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const graphContainer = useRef(null);
+    const graphContainerHtml = useRef(null);
+    const graphContainerSvg = useRef(null);
     const [error, setError] = useState(null);
     const [scale, setScale] = useState(1);
     const [loading, setLoading] = useState(false);
 
+
     // Filter states
-    const [activityPercent, setActivityPercent] = useState(100);
-    const [pathPercent, setPathPercent] = useState(100);
+    const [activityPercent, setActivityPercent] = useState(10);
+    const [pathPercent, setPathPercent] = useState(10);
     const [visualizationType, setVisualizationType] = useState('ocdfg');
     const [annotationType, setAnnotationType] = useState('unique_objects');
     const [orientation, setOrientation] = useState('horizontal');
     const { graph, objects, file_metadata_id } = location.state || {};
     const [selectedObjects, setSelectedObjects] = useState(objects || []);
+    const [exportFormat, setExportFormat] = useState('svg');
+    const [finalFormat, setFinalFormat] = useState('svg');
 
     // State for managing the dropdown open/close
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
-    // Zoom handlers
+
+
     const handleZoomIn = () => {
-        setScale((prevScale) => prevScale * 1.2);
+        setScale(prevScale => Math.min(5, prevScale + 0.1));
     };
 
     const handleZoomOut = () => {
-        setScale((prevScale) => prevScale / 1.2);
+        setScale(prevScale => Math.max(0.1, prevScale - 0.1));
     };
 
     const handleResetZoom = () => {
         setScale(1);
+    };
+
+    const handleWheel = (e) => {
+        if (e.ctrlKey) {  // Только если клавиша Ctrl зажата
+            e.preventDefault();
+            const delta = e.deltaY;
+            const zoomFactor = 0.1;
+
+            setScale(prevScale => {
+                const newScale = delta > 0
+                    ? Math.max(0.1, prevScale - zoomFactor)
+                    : Math.min(5, prevScale + zoomFactor);
+                return newScale;
+            });
+        }
+    };
+    const handleFormatChange = (event) => {
+        setExportFormat(event.target.value);
     };
 
     // Handler for opening the dropdown
@@ -109,9 +136,11 @@ const VisualizationPage = () => {
                 orientation,
                 unselectedObjects,
                 file_metadata_id,
+                format: exportFormat,
             })
             .then((response) => {
                 console.log('Filters applied successfully:', response.data)
+                setFinalFormat(exportFormat)
                 navigate('/visualization', {
                     state: {
                         graph: response.data.graph,
@@ -131,42 +160,45 @@ const VisualizationPage = () => {
 
     // Render the graph
     useEffect(() => {
-        if (!graph) {
-            navigate('/');
-            return;
-        }
+        if (!graph || finalFormat === 'svg') return;
 
         try {
-            if (!graph.includes('<svg')) {
-                throw new Error('Invalid SVG content');
-            }
-
-            if (graphContainer.current) {
-                graphContainer.current.innerHTML = '';
-
+            if (graphContainerSvg.current) {
+                graphContainerSvg.current.innerHTML = '';
                 const svgContainer = document.createElement('div');
                 svgContainer.style.transform = `scale(${scale})`;
                 svgContainer.style.transformOrigin = 'center';
                 svgContainer.style.transition = 'transform 0.2s ease-out';
-
                 svgContainer.innerHTML = graph;
-
                 const newSvg = svgContainer.querySelector('svg');
                 if (newSvg) {
                     newSvg.style.width = '100%';
                     newSvg.style.height = '100%';
-                    newSvg.style.maxWidth = '100%';
-
                     newSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
                 }
-
-                graphContainer.current.appendChild(svgContainer);
+                graphContainerSvg.current.appendChild(svgContainer);
             }
         } catch (err) {
             setError('Error displaying SVG. Please ensure the file is valid.');
             console.error('Error:', err);
         }
-    }, [graph, navigate, scale]);
+    }, [graph, scale, finalFormat]);
+
+    useEffect(() => {
+        if (!graph || finalFormat === 'html') return;
+
+        try {
+            if (graphContainerHtml.current) {
+                graphContainerHtml.current.innerHTML = '';
+                const htmlContainer = document.createElement('div');
+                htmlContainer.innerHTML = graph;
+                graphContainerHtml.current.appendChild(htmlContainer);
+            }
+        } catch (err) {
+            setError('Error displaying HTML. Please ensure the file is valid.');
+            console.error('Error:', err);
+        }
+    }, [graph, finalFormat]);
 
     return (
         <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -281,7 +313,25 @@ const VisualizationPage = () => {
                                 <MenuItem value="horizontal">Horizontal</MenuItem>
                             </Select>
                         </FormControl>
-
+                        { /* Format Selector */}
+                        {visualizationType === 'ocdfg' && (
+                            <FormControl sx={{ minWidth: '150px' }}>
+                                <InputLabel sx={{ color: 'white' }}>Format</InputLabel>
+                                <Select
+                                    value={exportFormat}
+                                    onChange={handleFormatChange}
+                                    label="Format"
+                                    sx={{
+                                        backgroundColor: '#63007C',
+                                        color: 'white',
+                                        '& .MuiSelect-icon': { color: 'white' },
+                                    }}
+                                >
+                                    <MenuItem value="svg">SVG</MenuItem>
+                                    <MenuItem value="html">HTML</MenuItem>
+                                </Select>
+                            </FormControl>
+                        )}
                         {/* Multi-Select Dropdown for Objects */}
                         <>
                             <Button
@@ -350,92 +400,101 @@ const VisualizationPage = () => {
             <Box
                 sx={{
                     flexGrow: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    backgroundColor: '#f9f9f9',
                     position: 'relative',
+                    overflow: 'hidden',
                 }}
             >
-                {/* Error Alert */}
-                {error && (
-                    <Alert
-                        severity="error"
-                        sx={{ mb: 2 }}
-                        onClose={() => setError(null)}
-                    >
-                        {error}
-                    </Alert>
-                )}
-
-                {/* Graph Container */}
                 <Box
-                    ref={graphContainer}
+                    ref={finalFormat === 'svg' ? graphContainerSvg : graphContainerHtml}
+                    onWheel={handleWheel}
                     sx={{
-                        flexGrow: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
                         overflow: 'auto',
                         backgroundColor: '#f9f9f9',
                     }}
                 >
-                    {!graph && !error && (
-                        <Typography color="text.secondary" align="center">
-                            No graph data available. Please upload an SVG file.
-                        </Typography>
+                    {error ? (
+                        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+                            {error}
+                        </Alert>
+                    ) : (
+                        <>
+                            {finalFormat === 'svg' ? (
+                                <Box
+                                    sx={{
+                                        transform: `scale(${scale})`,
+                                        transformOrigin: 'center',
+                                        transition: 'transform 0.2s ease-out',
+                                        width: '100%',
+                                        height: '100%',
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                    }}
+                                    dangerouslySetInnerHTML={{ __html: graph }}
+                                />
+                            ) : (
+                                <InteractiveGraph dotString={graph} />
+                            )}
+                        </>
                     )}
                 </Box>
+            </Box>
 
-                {/* Zoom Controls */}
+            {/* Zoom Controls */}
+            <Box
+                sx={{
+                    position: 'fixed',
+                    bottom: 16,
+                    right: 16,
+                    display: 'flex',
+                    gap: 1,
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    borderRadius: 2,
+                    padding: 1,
+                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+                    zIndex: 2,
+                }}
+            >
+                <IconButton onClick={handleZoomIn} size="small">
+                    <ZoomInIcon />
+                </IconButton>
+                <IconButton onClick={handleResetZoom} size="small">
+                    <RestoreIcon />
+                </IconButton>
+                <IconButton onClick={handleZoomOut} size="small">
+                    <ZoomOutIcon />
+                </IconButton>
+            </Box>
+
+            {/* Loading Spinner */}
+            {loading && (
                 <Box
                     sx={{
-                        position: 'fixed',
-                        bottom: 16,
-                        right: 16,
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
                         display: 'flex',
-                        gap: 1,
-                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                        borderRadius: 2,
-                        padding: 1,
-                        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 9999,
                     }}
                 >
-                    <IconButton onClick={handleZoomIn} size="small">
-                        <ZoomInIcon />
-                    </IconButton>
-                    <IconButton onClick={handleResetZoom} size="small">
-                        <RestoreIcon />
-                    </IconButton>
-                    <IconButton onClick={handleZoomOut} size="small">
-                        <ZoomOutIcon />
-                    </IconButton>
-                </Box>
-
-                {/* Loading Spinner Overlay */}
-                {loading && (
-                    <Box
-                        sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 9999,
-                        }}
-                    >
-                        <Box sx={{ textAlign: 'center' }}>
-                            <CircularProgress sx={{ color: 'white' }} />
-                            <Typography sx={{ color: 'white', marginTop: 2 }}>
-                                Processing your filters...
-                            </Typography>
-                        </Box>
+                    <Box sx={{ textAlign: 'center' }}>
+                        <CircularProgress sx={{ color: 'white' }} />
+                        <Typography sx={{ color: 'white', marginTop: 2 }}>
+                            Processing your filters...
+                        </Typography>
                     </Box>
-                )}
-            </Box>
+                </Box>
+            )}
         </Box>
     );
 };

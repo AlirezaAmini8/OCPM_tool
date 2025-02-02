@@ -1,11 +1,14 @@
 import os
 import pickle
+import tempfile
 
 import uuid
 import pm4py
 from pm4py.visualization.ocel.ocdfg.variants import classic
-from pm4py.visualization.ocel.ocpn import visualizer as ocpn_visualizer
 from pm4py.visualization.ocel.ocpn.variants import wo_decoration
+from pm4py.visualization.ocel.ocdfg import visualizer
+from pm4py.visualization.ocel.ocpn import visualizer as ocpn_visualizer
+from pm4py.visualization.common import gview
 
 
 def discover(ocel, is_ocdfg):
@@ -15,25 +18,38 @@ def discover(ocel, is_ocdfg):
         return pm4py.discover_oc_petri_net(ocel, "imd")
 
 
-def get_content(gviz):
-    path = f"./{uuid.uuid4()}"
-    file = gviz.render(path)
+def get_content(gviz , file_format="svg"):
+    try:
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_path = temp_file.name
 
-    with open(file, "r") as f:
-        content = f.read()
+        # if is_ocdfg:
+        #     visualizer.save(gviz, temp_path)
+        # else:
+        #     ocpn_visualizer.save(gviz, temp_path)
 
-    os.remove(path)
-    return content
+        if file_format == "html":
+            dot_bytes = gview.serialize_dot(gviz)
+            return dot_bytes.decode('utf-8')
+        else:
+            file = gviz.render(temp_path)
+            with open(file, "r") as f:
+                content = f.read()
+            return content
+
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
 
 def discover_oc_petri_net(ocpn, parameters):
     gviz = ocpn_visualizer.apply(ocpn, parameters=parameters)
-    return get_content(gviz)
+    return get_content(gviz, parameters.get(wo_decoration.Parameters.FORMAT))
 
 
 def discover_ocdfg(ocdfg, parameters):
     gviz = classic.apply(ocdfg, parameters=parameters)
-    return get_content(gviz)
+    return get_content(gviz, parameters.get(classic.Parameters.FORMAT))
 
 
 def filter_ocel_ocdfg(ocel, ocdfg=None, filters=None):
@@ -43,7 +59,8 @@ def filter_ocel_ocdfg(ocel, ocdfg=None, filters=None):
             "path_percent": 10,
             "selected_objects": None,
             "annotation_type": "unique_objects",
-            "orientation": "LR"
+            "orientation": "LR",
+            "format": "svg"
         }
 
     if filters.get("selected_objects"):
@@ -58,8 +75,9 @@ def filter_ocel_ocdfg(ocel, ocdfg=None, filters=None):
             edge_metric="event_couples" if filters.get("annotation_type") == 'events' else
             filters.get("annotation_type"),
     )
+
     parameters = {
-        classic.Parameters.FORMAT: 'svg',
+        classic.Parameters.FORMAT: filters.get("format", 'svg'),
         classic.Parameters.ANNOTATION: "frequency",
         classic.Parameters.ACT_METRIC: filters.get("annotation_type", "unique_objects"),
         classic.Parameters.EDGE_METRIC: "event_couples" if filters.get("annotation_type") == 'events'
@@ -78,7 +96,8 @@ def filter_ocel_ocpn(ocel, ocpn=None, filters=None):
     if filters is None:
         filters = {
             "selected_objects": None,
-            "orientation": "LR"
+            "orientation": "LR",
+            "format": "svg",
         }
 
     if filters.get("selected_objects"):
@@ -86,7 +105,7 @@ def filter_ocel_ocpn(ocel, ocpn=None, filters=None):
         ocpn = discover(ocel, False)
 
     parameters = {
-        wo_decoration.Parameters.FORMAT: 'svg',
+        wo_decoration.Parameters.FORMAT: filters.get("format", 'svg'),
         wo_decoration.Parameters.BGCOLOR: 'white',
         wo_decoration.Parameters.RANKDIR: filters.get("orientation", "LR")
     }
